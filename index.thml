@@ -1,0 +1,255 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Fitness Planner v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+<style>
+    * {
+        box-sizing: border-box;
+    }
+    body {
+        font-family: 'Montserrat', sans-serif;
+        margin: 0;
+        background: linear-gradient(135deg, #111, #222, #111);
+        color: #fff;
+    }
+    header {
+        text-align: center;
+        padding: 2rem;
+        background: linear-gradient(90deg, #ff512f, #dd2476);
+        box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    }
+    header h1 {
+        margin: 0;
+        font-size: 2.5rem;
+    }
+    main {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    .planner-form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        background: rgba(255,255,255,0.05);
+        padding: 1rem;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(255,255,255,0.1);
+    }
+    .planner-form input, .planner-form select, .planner-form button {
+        padding: 0.8rem;
+        border-radius: 5px;
+        border: none;
+        outline: none;
+        font-size: 1rem;
+    }
+    .planner-form input, .planner-form select {
+        background: rgba(255,255,255,0.1);
+        color: #fff;
+        flex: 1;
+    }
+    .planner-form input[type="number"] {
+        max-width: 100px;
+    }
+    .planner-form button {
+        background: linear-gradient(90deg, #ff512f, #dd2476);
+        color: #fff;
+        cursor: pointer;
+        transition: transform 0.2s ease, background 0.3s ease;
+    }
+    .planner-form button:hover {
+        transform: scale(1.05);
+        background: linear-gradient(90deg, #dd2476, #ff512f);
+    }
+    .workout-list {
+        margin-top: 2rem;
+    }
+    .day-section {
+        margin-bottom: 2rem;
+    }
+    .day-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid rgba(255,255,255,0.2);
+        padding-bottom: 0.3rem;
+    }
+    .workout-card {
+        background: rgba(255,255,255,0.05);
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 0.7rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 0 10px rgba(255,255,255,0.05);
+    }
+    .workout-info {
+        flex: 1;
+    }
+    .workout-title {
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin: 0 0 0.3rem 0;
+    }
+    .workout-meta {
+        font-size: 0.9rem;
+        color: #ccc;
+    }
+    .delete-btn {
+        background: none;
+        border: none;
+        color: #ff7675;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+    .delete-btn:hover {
+        transform: scale(1.2);
+    }
+    .stats {
+        background: rgba(255,255,255,0.05);
+        padding: 1rem;
+        border-radius: 10px;
+        margin-top: 2rem;
+        box-shadow: 0 0 10px rgba(255,255,255,0.05);
+    }
+    .stats h2 {
+        margin-top: 0;
+        font-size: 1.5rem;
+    }
+    footer {
+        text-align: center;
+        padding: 1rem;
+        font-size: 0.8rem;
+        color: #888;
+    }
+</style>
+</head>
+<body>
+<header>
+    <h1>🔥 Fitness Planner v2 🔥</h1>
+</header>
+<main>
+    <form class="planner-form" id="plannerForm">
+        <input type="text" id="exercise" placeholder="Oefening (bv. Push-ups)" required />
+        <input type="number" id="sets" placeholder="Sets" min="1" required />
+        <input type="number" id="reps" placeholder="Reps" min="1" required />
+        <input type="number" id="weight" placeholder="Gewicht (kg)" min="0" />
+        <select id="day" required>
+            <option value="">Dag kiezen</option>
+            <option>Maandag</option>
+            <option>Dinsdag</option>
+            <option>Woensdag</option>
+            <option>Donderdag</option>
+            <option>Vrijdag</option>
+            <option>Zaterdag</option>
+            <option>Zondag</option>
+        </select>
+        <button type="submit">+ Voeg toe</button>
+    </form>
+    <div class="workout-list" id="workoutList"></div>
+    <div class="stats" id="stats">
+        <h2>📊 Statistieken Deze Week</h2>
+        <p id="statTotal">Totale sets/reps: 0 sets, 0 reps</p>
+        <p id="statVolume">Totaal volume (kg): 0</p>
+    </div>
+</main>
+<footer>
+    &copy; 2024 Fitness Planner - v2 by AwesomeFit
+</footer>
+
+<script>
+    const form = document.getElementById('plannerForm');
+    const workoutList = document.getElementById('workoutList');
+    const statTotal = document.getElementById('statTotal');
+    const statVolume = document.getElementById('statVolume');
+
+    let workouts = JSON.parse(localStorage.getItem('workouts_v2')) || [];
+
+    // Voeg wat dummy data toe als er nog geen data is
+    if (workouts.length === 0) {
+        workouts = [
+            { exercise: 'Push-ups', sets: 4, reps: 15, weight: 0, day: 'Maandag' },
+            { exercise: 'Squats', sets: 5, reps: 10, weight: 40, day: 'Dinsdag' },
+            { exercise: 'Plank', sets: 3, reps: 60, weight: 0, day: 'Woensdag' },
+            { exercise: 'Bicep Curl', sets: 4, reps: 12, weight: 12, day: 'Donderdag' },
+            { exercise: 'Deadlift', sets: 5, reps: 5, weight: 80, day: 'Vrijdag' },
+            { exercise: 'Bench Press', sets: 5, reps: 8, weight: 60, day: 'Zaterdag' },
+            { exercise: 'Burpees', sets: 3, reps: 20, weight: 0, day: 'Zondag' }
+        ];
+        localStorage.setItem('workouts_v2', JSON.stringify(workouts));
+    }
+
+    function renderWorkouts() {
+        workoutList.innerHTML = '';
+        const days = ["Maandag","Dinsdag","Woensdag","Donderdag","Vrijdag","Zaterdag","Zondag"];
+        days.forEach(day => {
+            const dayWorkouts = workouts.filter(w => w.day === day);
+            if (dayWorkouts.length > 0) {
+                const section = document.createElement('div');
+                section.className = 'day-section';
+                section.innerHTML = `<h2 class="day-title">${day}</h2>`;
+                dayWorkouts.forEach((workout, index) => {
+                    const card = document.createElement('div');
+                    card.className = 'workout-card';
+                    card.innerHTML = `
+                        <div class="workout-info">
+                            <p class="workout-title">${workout.exercise}</p>
+                            <p class="workout-meta">${workout.sets} sets x ${workout.reps} reps ${workout.weight ? '- ' + workout.weight + 'kg' : ''}</p>
+                        </div>
+                        <button class="delete-btn" onclick="deleteWorkout(${workouts.indexOf(workout)})">&times;</button>
+                    `;
+                    section.appendChild(card);
+                });
+                workoutList.appendChild(section);
+            }
+        });
+        updateStats();
+    }
+
+    function deleteWorkout(index) {
+        workouts.splice(index, 1);
+        localStorage.setItem('workouts_v2', JSON.stringify(workouts));
+        renderWorkouts();
+    }
+
+    function updateStats() {
+        let totalSets = 0;
+        let totalReps = 0;
+        let totalVolume = 0;
+        workouts.forEach(w => {
+            totalSets += parseInt(w.sets);
+            totalReps += parseInt(w.reps) * parseInt(w.sets);
+            totalVolume += parseInt(w.sets) * parseInt(w.reps) * (parseInt(w.weight) || 0);
+        });
+        statTotal.textContent = `Totale sets/reps: ${totalSets} sets, ${totalReps} reps`;
+        statVolume.textContent = `Totaal volume (kg): ${totalVolume}`;
+    }
+
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        const exercise = document.getElementById('exercise').value.trim();
+        const sets = parseInt(document.getElementById('sets').value);
+        const reps = parseInt(document.getElementById('reps').value);
+        const weight = parseInt(document.getElementById('weight').value) || 0;
+        const day = document.getElementById('day').value;
+
+        workouts.push({ exercise, sets, reps, weight, day });
+        localStorage.setItem('workouts_v2', JSON.stringify(workouts));
+
+        form.reset();
+        renderWorkouts();
+    });
+
+    renderWorkouts();
+</script>
+</body>
+</html>
+```
